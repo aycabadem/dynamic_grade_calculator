@@ -27,16 +27,31 @@ class _MyHomePageState extends State<MyHomePage> {
   String lessonName;
   int lessonCredit = 1;
   double letterGrade = 4;
-  double lessonLetterValue = 4;
+  //double lessonLetterValue = 4;
+  List<Lesson> allLesson;
+  var formKey = GlobalKey<FormState>();
+  double average = 0;
 
   @override
+  @override
+  void initState() {
+    super.initState();
+    allLesson = [];
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
+      //Klavye tıklandığında kayma sebepli hata çıkarsa diye false atandı.
+      //resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text("Calculate Grade"),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          if (formKey.currentState.validate()) {
+            formKey.currentState.save();
+          }
+        },
         child: Icon(Icons.add),
       ),
       body: appBody(),
@@ -49,19 +64,22 @@ class _MyHomePageState extends State<MyHomePage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           //container holding static form
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.all(10),
-              color: Colors.pink.shade200,
-              child: Form(
-                  child: Column(
+          Container(
+            padding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+            //color: Colors.pink.shade200,
+            child: Form(
+              key: formKey,
+              child: Column(
                 children: [
                   TextFormField(
                     decoration: InputDecoration(
                       labelText: "Lesson Name",
                       hintText: "Enter the lesson name",
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2)),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.pink, width: 2)),
+                      enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black, width: 2)),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.pink, width: 2)),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(10))),
                     ),
@@ -73,20 +91,28 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                     onSaved: (valueToSave) {
                       lessonName = valueToSave;
+                      setState(() {
+                        allLesson
+                            .add(Lesson(lessonName, letterGrade, lessonCredit));
+                            average = 0;
+                            calculateAverage();
+                      });
                     },
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        child: DropdownButton<int>(
-                          items: lessonCreditItems(),
-                          value: lessonCredit,
-                          onChanged: (selectedCredit) {
-                            setState(() {
-                              lessonCredit = selectedCredit;
-                            });
-                          },
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<int>(
+                            items: lessonCreditItems(),
+                            value: lessonCredit,
+                            onChanged: (selectedCredit) {
+                              setState(() {
+                                lessonCredit = selectedCredit;
+                              });
+                            },
+                          ),
                         ),
                         padding:
                             EdgeInsets.symmetric(horizontal: 15, vertical: 4),
@@ -98,11 +124,12 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                       Container(
                         child: DropdownButton<double>(
+                          underline: SizedBox(),
                           items: lessonLetterValuesItems(),
-                          value: lessonLetterValue,
+                          value: letterGrade,
                           onChanged: (selectedLetter) {
                             setState(() {
-                              lessonLetterValue = selectedLetter;
+                              letterGrade = selectedLetter;
                             });
                           },
                         ),
@@ -115,17 +142,49 @@ class _MyHomePageState extends State<MyHomePage> {
                                 BorderRadius.all(Radius.circular(10))),
                       )
                     ],
-                  )
+                  ),
                 ],
-              )),
+              ),
+            ),
+          ),
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 15, vertical: 4),
+            child: Center(
+              child: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "Ortalama :",
+                      style: TextStyle(color: Colors.black, fontSize: 30),
+                    ),
+                    TextSpan(
+                      text: "${average.toStringAsFixed(2)}",
+                      style: TextStyle(
+                          color: Colors.purple,
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            height: 70,
+            decoration: BoxDecoration(
+              border: BorderDirectional(
+                top: BorderSide(color: Colors.blue, width: 2),
+                bottom: BorderSide(color: Colors.blue, width: 2),
+              ),
             ),
           ),
           //container holding dynamic list
           Expanded(
             child: Container(
-              color: Colors.green.shade200,
-              child: Text("List"),
-            ),
+                color: Colors.green.shade200,
+                child: ListView.builder(
+                  itemBuilder: _createListElements,
+                  itemCount: allLesson.length,
+                )),
           )
         ],
       ),
@@ -219,4 +278,35 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return letters;
   }
+
+  Widget _createListElements(BuildContext context, int index) {
+    return Card(
+      child: ListTile(
+        title: Text(allLesson[index].name),
+        subtitle: Text(allLesson[index].credit.toString() +
+            "Kredi, Harf Notu : " +
+            allLesson[index].letterValue.toString()),
+      ),
+    );
+  }
+
+  void calculateAverage() {
+    double sumGrade = 0;
+    double sumCredit =0;
+    for(var oankiDers in allLesson){
+      var credit = oankiDers.credit;
+      var letterValue = oankiDers.letterValue;
+      sumGrade += (letterValue * credit);
+      sumCredit += credit;
+    }
+    average = sumGrade/sumCredit;
+  }
+}
+
+class Lesson {
+  String name;
+  double letterValue;
+  int credit;
+
+  Lesson(this.name, this.letterValue, this.credit);
 }
