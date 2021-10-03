@@ -10,6 +10,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -29,6 +30,7 @@ class _MyHomePageState extends State<MyHomePage> {
   double letterGrade = 4;
   //double lessonLetterValue = 4;
   List<Lesson> allLesson;
+  static int sayac = 0;
   var formKey = GlobalKey<FormState>();
   double average = 0;
 
@@ -155,11 +157,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: "Ortalama :",
+                      text: allLesson.length==0? "Lütfen ders ekleyin " : "Ortalama :",
                       style: TextStyle(color: Colors.black, fontSize: 30),
                     ),
                     TextSpan(
-                      text: "${average.toStringAsFixed(2)}",
+                      text: allLesson.length==0? "" : "${average.toStringAsFixed(2)}",
                       style: TextStyle(
                           color: Colors.purple,
                           fontSize: 30,
@@ -280,12 +282,24 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _createListElements(BuildContext context, int index) {
-    return Card(
-      child: ListTile(
-        title: Text(allLesson[index].name),
-        subtitle: Text(allLesson[index].credit.toString() +
-            "Kredi, Harf Notu : " +
-            allLesson[index].letterValue.toString()),
+    sayac++;
+    debugPrint(sayac.toString());
+    return Dismissible(
+      key: Key(sayac.toString()),
+      direction: DismissDirection.startToEnd,
+      onDismissed: (direction){
+        setState(() {
+                  allLesson.removeAt(index);
+                  calculateAverage();
+                });
+      },
+      child: Card(
+        child: ListTile(
+          title: Text(allLesson[index].name),
+          subtitle: Text(allLesson[index].credit.toString() +
+              "Kredi, Harf Notu : " +
+              allLesson[index].letterValue.toString()),
+        ),
       ),
     );
   }
